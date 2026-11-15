@@ -1,4 +1,13 @@
-## 6.0.4 (Latest Release)
+## 6.1.0 (Latest Release)
+
+- **Dialog queue:** By default (`queue: true`), only one Bootbox dialog is visible at a time. Opening another parks the current dialog (hidden, kept in the DOM with state intact). Dismissing the top dialog restores the previous one (LIFO).
+- **`dismissAll`:** Alias of `hideAll()` — dismisses the active dialog and every parked dialog with no restore.
+- **`clearQueue()`:** Clears queue pointers without hiding dialogs.
+- **`queue: false`:** Escape hatch (per-dialog or via `setDefaults`) to restore legacy concurrent Bootstrap stacking.
+- **A11y:** Dialogs expose `aria-modal="true"`, wire `aria-labelledby` / `aria-describedby` when title/body exist, and the close button no longer sets `aria-hidden="true"`.
+- **Note:** Callers that previously opened multiple Bootbox modals at once will now get queued behavior unless they set `queue: false`.
+
+### 6.0.4
 
 - Updates `step` to allow setting value for date inputs
 

@@ -12,7 +12,7 @@ module.exports = function(params) {
 
         params.src || 'bootbox.js',
 
-        ['tests/**/*.test.js']
+        ['tests/helpers/cleanup.js', 'tests/**/*.test.js']
       ),
       exclude: [],
       reporters: ['dots', 'coverage', 'junit', 'progress', 'html'],

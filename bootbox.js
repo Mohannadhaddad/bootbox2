@@ -1,6 +1,6 @@
 /*! @preserve
  * bootbox.js
- * version: 6.0.4
+ * version: 6.1.0
  * author: Nick Payne <nick@kurai.co.uk>
  * license: MIT
  * http://bootboxjs.com/
@@ -22,7 +22,7 @@
 
   let exports = {};
 
-  let VERSION = '6.0.4';
+  let VERSION = '6.1.0';
   exports.VERSION = VERSION;
 
   let locales = {
@@ -34,10 +34,10 @@
   };
 
   let templates = {
-    dialog:         '<div class="bootbox modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><div class="bootbox-body"></div></div></div></div></div>',
+    dialog:         '<div class="bootbox modal" tabindex="-1" role="dialog" aria-modal="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><div class="bootbox-body"></div></div></div></div></div>',
     header:         '<div class="modal-header"><h5 class="modal-title"></h5></div>',
     footer:         '<div class="modal-footer"></div>',
-    closeButton:    '<button type="button" class="bootbox-close-button close btn-close" aria-hidden="true" aria-label="Close"></button>',
+    closeButton:    '<button type="button" class="bootbox-close-button close btn-close" aria-label="Close"></button>',
     form:           '<form class="bootbox-form"></form>',
     button:         '<button type="button" class="btn"></button>',
     option:         '<option value=""></option>',
@@ -94,8 +94,15 @@
     // The size of the modal to generate
     size: null,
     // A unique identifier for this modal
-    id: null
+    id: null,
+    // When true, only one Bootbox dialog is visible; opening another parks the current one (LIFO)
+    queue: true
   };
+
+  // LIFO dialog queue: active dialog + parked predecessors
+  let activeDialog = null;
+  let dialogStack = [];
+  let dialogIdCounter = 0;
 
 
   // PUBLIC FUNCTIONS
@@ -183,12 +190,57 @@
 
 
   /**
-   * Hides all currently active Bootbox modals
+   * Hides all currently active Bootbox modals and clears the LIFO queue (no restore).
    * @returns The current bootbox object
    */
   exports.hideAll = function () {
-    $('.bootbox').modal('hide');
+    let tracked = dialogStack.slice();
+    let i;
+    let dialog;
+    let meta;
 
+    if (activeDialog) {
+      tracked.push(activeDialog);
+    }
+
+    dialogStack = [];
+    activeDialog = null;
+
+    for (i = 0; i < tracked.length; i++) {
+      markDismissAll(tracked[i]);
+    }
+
+    $('.bootbox').each(function () {
+      dialog = $(this);
+      meta = dialog.data('bb-meta');
+      if (meta) {
+        meta.dismissAll = true;
+        meta.parking = false;
+      }
+
+      dialog.modal('hide');
+
+      if (!meta || !meta.options || !meta.options.reusable) {
+        dialog.remove();
+      }
+    });
+
+    return exports;
+  };
+
+  /**
+   * Alias of hideAll — dismisses the active dialog and every parked dialog.
+   * @returns The current bootbox object
+   */
+  exports.dismissAll = exports.hideAll;
+
+  /**
+   * Clears the LIFO queue pointers without hiding or destroying dialogs.
+   * @returns The current bootbox object
+   */
+  exports.clearQueue = function () {
+    dialogStack = [];
+    activeDialog = null;
     return exports;
   };
 
@@ -238,12 +290,23 @@
     let header = $(templates.header);
     let footer = $(templates.footer);
     let buttons = options.buttons;
+    let titleId = 'bootbox-title-' + (++dialogIdCounter);
+    let bodyId = 'bootbox-body-' + dialogIdCounter;
+    let bootboxBody = body.find('.bootbox-body');
 
     let callbacks = {
       onEscape: options.onEscape
     };
 
-    body.find('.bootbox-body').html(options.message);
+    bootboxBody.attr('id', bodyId).html(options.message);
+    dialog.attr('aria-describedby', bodyId);
+
+    dialog.data('bb-meta', {
+      options: options,
+      parking: false,
+      dismissAll: false,
+      tracked: options.queue === true
+    });
 
     // Only attempt to create buttons if at least one has been defined in the options object
     if (getKeyLength(options.buttons) > 0) {
@@ -333,7 +396,8 @@
 
     if(options.title || options.closeButton) {
       if (options.title) {
-        header.find('.modal-title').html(options.title);
+        header.find('.modal-title').attr('id', titleId).html(options.title);
+        dialog.attr('aria-labelledby', titleId);
       }
       else {
         header.addClass('border-0');
@@ -368,12 +432,28 @@
     }
 
     // Bootstrap event listeners; these handle extra setup & teardown required after the underlying modal has performed certain actions.
+    // Queue-aware: park hides must not unbind or destroy the dialog.
 
-    if(!options.reusable) {
-      // make sure we unbind any listeners once the dialog has definitively been dismissed
-      dialog.one('hide.bs.modal', { dialog: dialog }, unbindModal);
-      dialog.one('hidden.bs.modal', { dialog: dialog }, destroyModal);
-    }
+    dialog.on('hide.bs.modal', { dialog: dialog }, function (e) {
+      let meta;
+
+      if (e.target !== e.data.dialog[0]) {
+        return;
+      }
+
+      meta = e.data.dialog.data('bb-meta');
+      if (meta && meta.parking) {
+        return;
+      }
+
+      if (!options.reusable) {
+        unbindModal(e);
+      }
+    });
+
+    dialog.on('hidden.bs.modal', { dialog: dialog }, function (e) {
+      onDialogHidden(e, options);
+    });
 
     if (options.onHide) {
       if (typeof options.onHide === 'function') {
@@ -402,7 +482,8 @@
       }
     }
 
-    dialog.one('shown.bs.modal', { dialog: dialog }, focusPrimaryButton);
+    // Use on (not one) so focus is restored after a parked dialog is shown again
+    dialog.on('shown.bs.modal', { dialog: dialog }, focusPrimaryButton);
 
     if (options.onShown) {
       if (typeof options.onShown === 'function') {
@@ -478,7 +559,7 @@
     });
 
     if (options.show) {
-      dialog.modal('show', options.relatedTarget);
+      queueAwareShow(dialog, options.relatedTarget);
     }
 
     return dialog;
@@ -883,7 +964,7 @@
     });
 
     if (shouldShow === true) {
-      promptDialog.modal('show');
+      queueAwareShow(promptDialog, options.relatedTarget);
     }
 
     return promptDialog;
@@ -1107,6 +1188,116 @@
 
   function focusPrimaryButton(e) {
     e.data.dialog.find('.bootbox-accept').first().trigger('focus');
+  }
+
+
+  function markDismissAll(dialog) {
+    let meta = dialog.data('bb-meta');
+    if (meta) {
+      meta.dismissAll = true;
+      meta.parking = false;
+    }
+  }
+
+
+  function parkActive() {
+    let current = activeDialog;
+    let meta;
+
+    if (!current) {
+      return;
+    }
+
+    meta = current.data('bb-meta');
+    if (meta) {
+      meta.parking = true;
+    }
+
+    dialogStack.push(current);
+    activeDialog = null;
+    current.modal('hide');
+  }
+
+
+  function restoreNext() {
+    let previous;
+    let meta;
+
+    if (activeDialog || dialogStack.length === 0) {
+      return;
+    }
+
+    previous = dialogStack.pop();
+    meta = previous.data('bb-meta');
+
+    // Skip dialogs that were removed from the DOM outside the queue
+    if (!previous.parent().length) {
+      restoreNext();
+      return;
+    }
+
+    activeDialog = previous;
+    previous.modal('show', meta && meta.options ? meta.options.relatedTarget : undefined);
+  }
+
+
+  function queueAwareShow(dialog, relatedTarget) {
+    let meta = dialog.data('bb-meta');
+    let useQueue = meta && meta.tracked;
+
+    // Park any current dialog, then show the new one immediately so callers keep sync show semantics
+    if (useQueue && activeDialog && activeDialog[0] !== dialog[0]) {
+      parkActive();
+    }
+
+    if (useQueue) {
+      activeDialog = dialog;
+    }
+
+    dialog.modal('show', relatedTarget);
+  }
+
+
+  function onDialogHidden(e, options) {
+    let dialog;
+    let meta;
+
+    // Ensure we don't accidentally intercept hidden events triggered by children of the current dialog.
+    if (e.target !== e.data.dialog[0]) {
+      return;
+    }
+
+    dialog = e.data.dialog;
+    meta = dialog.data('bb-meta');
+
+    if (meta && meta.parking) {
+      meta.parking = false;
+      return;
+    }
+
+    if (!options.reusable) {
+      destroyModal(e);
+    }
+
+    if (meta && meta.dismissAll) {
+      if (activeDialog && activeDialog[0] === dialog[0]) {
+        activeDialog = null;
+      }
+      return;
+    }
+
+    if (meta && meta.tracked) {
+      if (activeDialog && activeDialog[0] === dialog[0]) {
+        activeDialog = null;
+      }
+
+      // Remove this dialog from the stack if it was parked and dismissed somehow
+      dialogStack = dialogStack.filter(function (d) {
+        return d[0] !== dialog[0];
+      });
+
+      restoreNext();
+    }
   }
 
 

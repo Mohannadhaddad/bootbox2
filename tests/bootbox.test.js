@@ -14,10 +14,15 @@ describe('Bootbox', function() {
     expect(bootbox.removeLocale).to.be.a('function');
     expect(bootbox.locales).to.be.a('function');
     expect(bootbox.hideAll).to.be.a('function');
+    expect(bootbox.dismissAll).to.be.a('function');
+    expect(bootbox.dismissAll).to.equal(bootbox.hideAll);
+    expect(bootbox.clearQueue).to.be.a('function');
   });
 
   describe('hideAll', function() {
     beforeEach(function() {
+      this.first = bootbox.alert({ message: 'first', animate: false });
+      this.second = bootbox.alert({ message: 'second', animate: false });
       this.hidden = sinon.spy($.fn, 'modal');
       bootbox.hideAll();
     });
@@ -27,7 +32,8 @@ describe('Bootbox', function() {
     });
 
     it('should hide all .bootbox modals', function() {
-      expect(this.hidden).to.have.been.calledWithExactly('hide');
+      expect(this.hidden).to.have.been.calledWith('hide');
+      expect($('.bootbox').length).to.equal(0);
     });
   });
 

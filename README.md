@@ -3,6 +3,10 @@
 Please see http://bootboxjs.com for full usage instructions, or head over to http://paynedigital.com/bootbox for
 the original writeup about the project.
 
+## Examples
+
+Open [`examples/index.html`](examples/index.html) in a local static server (for example `npx serve .`) for interactive demos of alert, confirm, prompt, custom dialogs, and the **new LIFO dialog queue** (highlighted).
+
 ## Contributing
 
 Please see the [CONTRIBUTING](https://github.com/bootboxjs/bootbox/blob/master/CONTRIBUTING.md) file for guidelines.

@@ -1,6 +1,6 @@
 /*! @preserve
  * bootbox.js
- * version: 6.1.0
+ * version: 6.1.1
  * author: Nick Payne <nick@kurai.co.uk>
  * license: MIT
  * http://bootboxjs.com/
@@ -22,14 +22,15 @@
 
   let exports = {};
 
-  let VERSION = '6.1.0';
+  let VERSION = '6.1.1';
   exports.VERSION = VERSION;
 
   let locales = {
     'en' : {
-      OK      : 'OK',
-      CANCEL  : 'Cancel',
-      CONFIRM : 'OK'
+      OK          : 'OK',
+      CANCEL      : 'Cancel',
+      CONFIRM     : 'OK',
+      DISMISS_ALL : 'Dismiss all'
     }
   };
 
@@ -1088,11 +1089,15 @@
   }
 
 
-  // Get localized text from a locale. Defaults to 'en' locale if no locale provided or a non-registered locale is requested
+  // Get localized text from a locale. Defaults to 'en' locale if no locale provided, the locale is unregistered, or the key is missing
   function getText(key, locale) {
     let labels = locales[locale];
 
-    return labels ? labels[key] : locales.en[key];
+    if (labels && labels[key] !== undefined) {
+      return labels[key];
+    }
+
+    return locales.en[key];
   }
 
 
@@ -1200,11 +1205,69 @@
   }
 
 
-  function parkActive() {
+  function queueTotalCount() {
+    return dialogStack.length + (activeDialog ? 1 : 0);
+  }
+
+
+  function ensureFooter(dialog) {
+    let footer = dialog.find('.modal-footer');
+
+    if (!footer.length) {
+      footer = $(templates.footer);
+      dialog.find('.modal-content').append(footer);
+    }
+
+    return footer;
+  }
+
+
+  function updateDismissAllButton(dialog) {
+    let meta;
+    let locale;
+    let footer;
+    let button;
+    let total;
+
+    if (!dialog || !dialog.length) {
+      return;
+    }
+
+    meta = dialog.data('bb-meta');
+    locale = meta && meta.options ? meta.options.locale : defaults.locale;
+    button = dialog.find('.bootbox-dismiss-all');
+    total = queueTotalCount();
+
+    if (activeDialog && activeDialog[0] === dialog[0] && total > 1) {
+      footer = ensureFooter(dialog);
+
+      if (!button.length) {
+        button = $(templates.button)
+          .addClass('bootbox-dismiss-all btn-danger');
+        footer.prepend(button);
+        button.on('click.bb-dismiss-all', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          exports.dismissAll();
+        });
+      }
+
+      button.text(getText('DISMISS_ALL', locale) + ' (' + total + ')');
+    }
+    else if (button.length) {
+      button.remove();
+    }
+  }
+
+
+  function parkActive(callback) {
     let current = activeDialog;
     let meta;
 
     if (!current) {
+      if (callback) {
+        callback();
+      }
       return;
     }
 
@@ -1215,6 +1278,13 @@
 
     dialogStack.push(current);
     activeDialog = null;
+
+    current.one('hidden.bs.modal', function (e) {
+      if (e.target === current[0] && callback) {
+        callback();
+      }
+    });
+
     current.modal('hide');
   }
 
@@ -1237,6 +1307,7 @@
     }
 
     activeDialog = previous;
+    updateDismissAllButton(previous);
     previous.modal('show', meta && meta.options ? meta.options.relatedTarget : undefined);
   }
 
@@ -1245,16 +1316,25 @@
     let meta = dialog.data('bb-meta');
     let useQueue = meta && meta.tracked;
 
-    // Park any current dialog, then show the new one immediately so callers keep sync show semantics
+    function showNow() {
+      if (useQueue) {
+        activeDialog = dialog;
+      }
+
+      dialog.modal('show', relatedTarget);
+
+      if (useQueue) {
+        updateDismissAllButton(dialog);
+      }
+    }
+
+    // Wait until the parked dialog is fully hidden so only one dialog is visible at a time
     if (useQueue && activeDialog && activeDialog[0] !== dialog[0]) {
-      parkActive();
+      parkActive(showNow);
+      return;
     }
 
-    if (useQueue) {
-      activeDialog = dialog;
-    }
-
-    dialog.modal('show', relatedTarget);
+    showNow();
   }
 
 

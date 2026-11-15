@@ -1,4 +1,10 @@
-## 6.1.0 (Latest Release)
+## 6.1.1 (Latest Release)
+
+- **One-at-a-time show:** the next queued dialog waits until the parked dialog has fully hidden before showing, so overlapping Bootstrap transitions no longer look like separate fires.
+- **In-dialog Dismiss all (N):** when more than one dialog is queued, the active dialog footer shows a red (`btn-danger`) **Dismiss all (N)** button (`N` = active + parked). Clicking it clears the whole queue with no restore.
+- Locale key `DISMISS_ALL` (English default `"Dismiss all"`); missing translations fall back to English.
+
+### 6.1.0
 
 - **Dialog queue:** By default (`queue: true`), only one Bootbox dialog is visible at a time. Opening another parks the current dialog (hidden, kept in the DOM with state intact). Dismissing the top dialog restores the previous one (LIFO).
 - **`dismissAll`:** Alias of `hideAll()` — dismisses the active dialog and every parked dialog with no restore.

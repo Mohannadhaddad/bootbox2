@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Examples — Bootbox.js</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bb-ink: #14212b;
+      --bb-muted: #5b6b78;
+      --bb-paper: #f3f6f8;
+      --bb-surface: #ffffff;
+      --bb-accent: #0d7c66;
+      --bb-accent-deep: #095c4c;
+      --bb-new: #c45c16;
+      --bb-new-soft: #fff4eb;
+      --bb-line: #d7e0e7;
+      --bb-code: #0f1720;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--bb-ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(13, 124, 102, 0.12), transparent 60%),
+        radial-gradient(900px 420px at 100% 0%, rgba(196, 92, 22, 0.10), transparent 55%),
+        linear-gradient(180deg, #eef3f6 0%, var(--bb-paper) 40%, #e9eef2 100%);
+      min-height: 100vh;
+    }
+
+    a { color: var(--bb-accent-deep); }
+
+    .site-header {
+      padding: 2.5rem 0 1.25rem;
+      border-bottom: 1px solid var(--bb-line);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      font-size: clamp(1.75rem, 3vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .brand span {
+      color: var(--bb-accent);
+    }
+
+    .lede {
+      color: var(--bb-muted);
+      max-width: 42rem;
+      margin: 0.75rem 0 0;
+      font-size: 1.05rem;
+    }
+
+    .version-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: #e7f4f0;
+      color: var(--bb-accent-deep);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 2rem;
+      padding: 2rem 0 3rem;
+    }
+
+    @media (max-width: 991px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .side-nav {
+        position: static !important;
+        order: -1;
+      }
+    }
+
+    .side-nav {
+      position: sticky;
+      top: 1rem;
+      align-self: start;
+      background: var(--bb-surface);
+      border: 1px solid var(--bb-line);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .side-nav h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--bb-muted);
+      margin: 0 0 0.75rem;
+    }
+
+    .side-nav a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--bb-ink);
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .side-nav a:hover {
+      background: var(--bb-paper);
+    }
+
+    .side-nav a.is-new {
+      background: var(--bb-new-soft);
+      color: var(--bb-new);
+      font-weight: 600;
+    }
+
+    .badge-new {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: var(--bb-new);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.18rem 0.45rem;
+      line-height: 1.2;
+    }
+
+    .example-section {
+      margin-bottom: 2rem;
+      scroll-margin-top: 1rem;
+    }
+
+    .example-section h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+    }
+
+    .section-intro {
+      color: var(--bb-muted);
+      margin: 0 0 1rem;
+    }
+
+    .example {
+      background: var(--bb-surface);
+      border: 1px solid var(--bb-line);
+      border-radius: 12px;
+      padding: 1.1rem 1.2rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .example-new {
+      border-color: rgba(196, 92, 22, 0.45);
+      box-shadow:
+        0 0 0 1px rgba(196, 92, 22, 0.12),
+        0 12px 28px rgba(196, 92, 22, 0.08);
+      background:
+        linear-gradient(180deg, #fffaf5 0%, #ffffff 42%);
+      animation: newPulse 2.4s ease-in-out 1;
+    }
+
+    @keyframes newPulse {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-2px); }
+    }
+
+    .example-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .example-head h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .example p {
+      margin: 0 0 0.85rem;
+      color: var(--bb-muted);
+      font-size: 0.95rem;
+    }
+
+    .example-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .btn-run {
+      --bs-btn-bg: var(--bb-accent);
+      --bs-btn-border-color: var(--bb-accent);
+      --bs-btn-hover-bg: var(--bb-accent-deep);
+      --bs-btn-hover-border-color: var(--bb-accent-deep);
+      --bs-btn-color: #fff;
+      --bs-btn-hover-color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-ghost {
+      --bs-btn-color: var(--bb-ink);
+      --bs-btn-border-color: var(--bb-line);
+      --bs-btn-hover-bg: var(--bb-paper);
+      --bs-btn-hover-border-color: #c5d0d9;
+      --bs-btn-hover-color: var(--bb-ink);
+    }
+
+    pre {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      border-radius: 8px;
+      background: var(--bb-code);
+      color: #e8eef5;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      overflow-x: auto;
+    }
+
+    .log-panel {
+      position: sticky;
+      bottom: 0;
+      margin-top: 1.5rem;
+      background: rgba(15, 23, 32, 0.96);
+      color: #d7e2ec;
+      border-radius: 12px 12px 0 0;
+      border: 1px solid #243041;
+      padding: 0.85rem 1rem 1rem;
+      max-height: 180px;
+      overflow: auto;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+    }
+
+    .log-panel h2 {
+      margin: 0 0 0.5rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8ea0b3;
+      font-family: "IBM Plex Sans", sans-serif;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .log-panel button {
+      border: 0;
+      background: transparent;
+      color: #9fb3c7;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .log-line { margin: 0.15rem 0; }
+    .log-line .ts { color: #6f8498; margin-right: 0.45rem; }
+
+    .footer-note {
+      color: var(--bb-muted);
+      font-size: 0.9rem;
+      padding-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <p class="brand">Bootbox<span>.js</span></p>
+      <p class="lede">
+        Interactive examples for alert, confirm, prompt, custom dialogs — and the new
+        LIFO dialog queue introduced in 6.1.0.
+      </p>
+      <div class="version-chip">Running local <code>dist/bootbox.all.js</code> · v6.1.0</div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <main>
+      <section id="queue" class="example-section">
+        <h2>Dialog queue <span class="badge-new">New in 6.1.0</span></h2>
+        <p class="section-intro">
+          By default only one Bootbox dialog is visible at a time. Opening another parks
+          the current dialog; dismissing restores the previous one (LIFO).
+        </p>
+
+        <article class="example example-new" id="example-queue-lifo">
+          <div class="example-head">
+            <h3>Park &amp; restore (LIFO)</h3>
+            <span class="badge-new">New</span>
+          </div>
+          <p>
+            Opens a first alert, then a second. The first is parked (hidden, state kept)
+            until you dismiss the second — then it comes back.
+          </p>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-queue-lifo">Run example</button>
+          </div>
+<pre><code>bootbox.alert({
+  title: 'First dialog',
+  message: 'I will be parked when the next dialog opens.'
+});
+
+bootbox.alert({
+  title: 'Second dialog',
+  message: 'Dismiss me to restore the first dialog.'
+});</code></pre>
+        </article>
+
+        <article class="example example-new" id="example-queue-dismiss-all">
+          <div class="example-head">
+            <h3>Dismiss all parked dialogs</h3>
+            <span class="badge-new">New</span>
+          </div>
+          <p>
+            <code>bootbox.dismissAll()</code> (alias of <code>hideAll()</code>) clears the
+            active dialog and every parked dialog with no restore.
+          </p>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-queue-stack">Open a stack</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="run-dismiss-all">Dismiss all</button>
+          </div>
+<pre><code>bootbox.alert({ title: 'Layer 1', message: 'Parked first' });
+bootbox.alert({ title: 'Layer 2', message: 'Parked second' });
+bootbox.alert({ title: 'Layer 3', message: 'Active on top' });
+
+// Later:
+bootbox.dismissAll();</code></pre>
+        </article>
+
+        <article class="example example-new" id="example-queue-false">
+          <div class="example-head">
+            <h3>Legacy concurrent stacking</h3>
+            <span class="badge-new">New</span>
+          </div>
+          <p>
+            Pass <code>queue: false</code> (per dialog or via <code>setDefaults</code>) to
+            restore the old Bootstrap stacking behavior.
+          </p>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-queue-false">Run example</button>
+          </div>
+<pre><code>bootbox.alert({
+  message: 'Bottom dialog',
+  queue: false
+});
+
+bootbox.alert({
+  message: 'Top dialog (both visible)',
+  queue: false
+});</code></pre>
+        </article>
+      </section>
+
+      <section id="alert" class="example-section">
+        <h2>Alert</h2>
+        <p class="section-intro">Simple notifications with optional callbacks and sizing.</p>
+
+        <article class="example">
+          <div class="example-head"><h3>Basic usage</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-alert-basic">Run example</button>
+          </div>
+<pre><code>bootbox.alert('This is the default alert!');</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>With callback</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-alert-callback">Run example</button>
+          </div>
+<pre><code>bootbox.alert('This is an alert with a callback!', function () {
+  console.log('This was logged in the callback!');
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Small dialog</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-alert-small">Run example</button>
+          </div>
+<pre><code>bootbox.alert({
+  message: 'This is the small alert!',
+  size: 'small'
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Dismiss with overlay click</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-alert-backdrop">Run example</button>
+          </div>
+<pre><code>bootbox.alert({
+  message: 'This alert can be dismissed by clicking on the background!',
+  backdrop: true
+});</code></pre>
+        </article>
+      </section>
+
+      <section id="confirm" class="example-section">
+        <h2>Confirm</h2>
+        <p class="section-intro">Yes/no decisions with custom button labels and colors.</p>
+
+        <article class="example">
+          <div class="example-head"><h3>Basic usage</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-confirm-basic">Run example</button>
+          </div>
+<pre><code>bootbox.confirm('This is the default confirm!', function (result) {
+  console.log('This was logged in the callback: ' + result);
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Custom button text and color</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-confirm-custom">Run example</button>
+          </div>
+<pre><code>bootbox.confirm({
+  message: 'This is a confirm with custom button text and color! Do you like it?',
+  buttons: {
+    confirm: { label: 'Yes', className: 'btn-success' },
+    cancel: { label: 'No', className: 'btn-danger' }
+  },
+  callback: function (result) {
+    console.log('This was logged in the callback: ' + result);
+  }
+});</code></pre>
+        </article>
+      </section>
+
+      <section id="prompt" class="example-section">
+        <h2>Prompt</h2>
+        <p class="section-intro">Collect input with text, select, checkbox, and other HTML5 types.</p>
+
+        <article class="example">
+          <div class="example-head"><h3>Basic usage</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-prompt-basic">Run example</button>
+          </div>
+<pre><code>bootbox.prompt('This is the default prompt!', function (result) {
+  console.log(result);
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Select input</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-prompt-select">Run example</button>
+          </div>
+<pre><code>bootbox.prompt({
+  title: 'This is a prompt with select!',
+  inputType: 'select',
+  inputOptions: [
+    { text: 'Choose one...', value: '' },
+    { text: 'Choice One', value: '1' },
+    { text: 'Choice Two', value: '2' },
+    { text: 'Choice Three', value: '3' }
+  ],
+  callback: function (result) {
+    console.log(result);
+  }
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Checkbox input</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-prompt-checkbox">Run example</button>
+          </div>
+<pre><code>bootbox.prompt({
+  title: 'This is a prompt with a set of checkbox inputs!',
+  value: ['1', '3'],
+  inputType: 'checkbox',
+  inputOptions: [
+    { text: 'Choice One', value: '1' },
+    { text: 'Choice Two', value: '2' },
+    { text: 'Choice Three', value: '3' }
+  ],
+  callback: function (result) {
+    console.log(result);
+  }
+});</code></pre>
+        </article>
+      </section>
+
+      <section id="custom" class="example-section">
+        <h2>Custom dialogs</h2>
+        <p class="section-intro">Flexible dialogs with custom buttons, sizes, and init hooks.</p>
+
+        <article class="example">
+          <div class="example-head"><h3>Buttons and callbacks</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-custom-buttons">Run example</button>
+          </div>
+<pre><code>bootbox.dialog({
+  title: 'A custom dialog with buttons and callbacks',
+  message: '&lt;p&gt;This dialog has buttons. Each button has its own callback function.&lt;/p&gt;',
+  size: 'large',
+  buttons: {
+    cancel: {
+      label: "I'm a cancel button!",
+      className: 'btn-danger',
+      callback: function () { console.log('Custom cancel clicked'); }
+    },
+    noclose: {
+      label: "I don't close the modal!",
+      className: 'btn-warning',
+      callback: function () {
+        console.log('Custom button clicked');
+        return false;
+      }
+    },
+    ok: {
+      label: "I'm an OK button!",
+      className: 'btn-info',
+      callback: function () { console.log('Custom OK clicked'); }
+    }
+  }
+});</code></pre>
+        </article>
+
+        <article class="example">
+          <div class="example-head"><h3>Loading overlay</h3></div>
+          <div class="example-actions">
+            <button type="button" class="btn btn-run btn-sm" id="run-custom-loading">Run example</button>
+          </div>
+<pre><code>var dialog = bootbox.dialog({
+  message: '&lt;p class="text-center mb-0"&gt;Please wait while we do something...&lt;/p&gt;',
+  closeButton: false
+});
+
+setTimeout(function () {
+  dialog.modal('hide');
+}, 2000);</code></pre>
+        </article>
+      </section>
+
+      <p class="footer-note">
+        Open this page from the repo root via a local static server
+        (for example <code>npx serve .</code>) so <code>../dist/bootbox.all.js</code> loads.
+        Official docs also live at
+        <a href="http://bootboxjs.com/examples.html">bootboxjs.com/examples.html</a>.
+      </p>
+
+      <div class="log-panel" id="log-panel" aria-live="polite">
+        <h2>
+          <span>Callback log</span>
+          <button type="button" id="clear-log">Clear</button>
+        </h2>
+        <div id="log-lines"><div class="log-line"><span class="ts">ready</span> Waiting for examples…</div></div>
+      </div>
+    </main>
+
+    <aside class="side-nav" aria-label="Examples navigation">
+      <h2>On this page</h2>
+      <a class="is-new" href="#queue">Dialog queue <span class="badge-new">New</span></a>
+      <a href="#alert">Alert</a>
+      <a href="#confirm">Confirm</a>
+      <a href="#prompt">Prompt</a>
+      <a href="#custom">Custom dialogs</a>
+    </aside>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../dist/bootbox.all.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var logLines = document.getElementById('log-lines');
+
+      function log(message) {
+        var row = document.createElement('div');
+        row.className = 'log-line';
+        var ts = document.createElement('span');
+        ts.className = 'ts';
+        ts.textContent = new Date().toLocaleTimeString();
+        row.appendChild(ts);
+        row.appendChild(document.createTextNode(String(message)));
+        logLines.appendChild(row);
+        logLines.parentElement.scrollTop = logLines.parentElement.scrollHeight;
+        if (window.console && console.log) {
+          console.log(message);
+        }
+      }
+
+      document.getElementById('clear-log').addEventListener('click', function () {
+        logLines.innerHTML = '';
+      });
+
+      // --- New in 6.1.0: dialog queue ---
+      document.getElementById('run-queue-lifo').addEventListener('click', function () {
+        bootbox.alert({
+          title: 'First dialog',
+          message: 'I will be parked when the next dialog opens. Dismiss the second dialog to restore me.'
+        });
+        // Open the second dialog on the next tick so the first can finish showing.
+        setTimeout(function () {
+          bootbox.alert({
+            title: 'Second dialog',
+            message: 'Dismiss me to restore the first dialog.',
+            callback: function () {
+              log('Second dialog dismissed — first should restore');
+            }
+          });
+        }, 350);
+      });
+
+      document.getElementById('run-queue-stack').addEventListener('click', function () {
+        bootbox.alert({ title: 'Layer 1', message: 'Parked first' });
+        setTimeout(function () {
+          bootbox.alert({ title: 'Layer 2', message: 'Parked second' });
+          setTimeout(function () {
+            bootbox.alert({ title: 'Layer 3', message: 'Active on top — try Dismiss all' });
+            log('Opened a 3-deep queue stack');
+          }, 250);
+        }, 250);
+      });
+
+      document.getElementById('run-dismiss-all').addEventListener('click', function () {
+        bootbox.dismissAll();
+        log('bootbox.dismissAll() called');
+      });
+
+      document.getElementById('run-queue-false').addEventListener('click', function () {
+        bootbox.alert({
+          message: 'Bottom dialog (queue: false)',
+          queue: false
+        });
+        setTimeout(function () {
+          bootbox.alert({
+            message: 'Top dialog (both visible with queue: false)',
+            queue: false,
+            callback: function () {
+              log('Top concurrent dialog closed');
+            }
+          });
+        }, 200);
+      });
+
+      // --- Alert ---
+      document.getElementById('run-alert-basic').addEventListener('click', function () {
+        bootbox.alert('This is the default alert!');
+      });
+
+      document.getElementById('run-alert-callback').addEventListener('click', function () {
+        bootbox.alert('This is an alert with a callback!', function () {
+          log('This was logged in the callback!');
+        });
+      });
+
+      document.getElementById('run-alert-small').addEventListener('click', function () {
+        bootbox.alert({
+          message: 'This is the small alert!',
+          size: 'small'
+        });
+      });
+
+      document.getElementById('run-alert-backdrop').addEventListener('click', function () {
+        bootbox.alert({
+          message: 'This alert can be dismissed by clicking on the background!',
+          backdrop: true
+        });
+      });
+
+      // --- Confirm ---
+      document.getElementById('run-confirm-basic').addEventListener('click', function () {
+        bootbox.confirm('This is the default confirm!', function (result) {
+          log('This was logged in the callback: ' + result);
+        });
+      });
+
+      document.getElementById('run-confirm-custom').addEventListener('click', function () {
+        bootbox.confirm({
+          message: 'This is a confirm with custom button text and color! Do you like it?',
+          buttons: {
+            confirm: { label: 'Yes', className: 'btn-success' },
+            cancel: { label: 'No', className: 'btn-danger' }
+          },
+          callback: function (result) {
+            log('This was logged in the callback: ' + result);
+          }
+        });
+      });
+
+      // --- Prompt ---
+      document.getElementById('run-prompt-basic').addEventListener('click', function () {
+        bootbox.prompt('This is the default prompt!', function (result) {
+          log(result);
+        });
+      });
+
+      document.getElementById('run-prompt-select').addEventListener('click', function () {
+        bootbox.prompt({
+          title: 'This is a prompt with select!',
+          inputType: 'select',
+          inputOptions: [
+            { text: 'Choose one...', value: '' },
+            { text: 'Choice One', value: '1' },
+            { text: 'Choice Two', value: '2' },
+            { text: 'Choice Three', value: '3' }
+          ],
+          callback: function (result) {
+            log(result);
+          }
+        });
+      });
+
+      document.getElementById('run-prompt-checkbox').addEventListener('click', function () {
+        bootbox.prompt({
+          title: 'This is a prompt with a set of checkbox inputs!',
+          value: ['1', '3'],
+          inputType: 'checkbox',
+          inputOptions: [
+            { text: 'Choice One', value: '1' },
+            { text: 'Choice Two', value: '2' },
+            { text: 'Choice Three', value: '3' }
+          ],
+          callback: function (result) {
+            log(JSON.stringify(result));
+          }
+        });
+      });
+
+      // --- Custom ---
+      document.getElementById('run-custom-buttons').addEventListener('click', function () {
+        bootbox.dialog({
+          title: 'A custom dialog with buttons and callbacks',
+          message: '<p>This dialog has buttons. Each button has its own callback function.</p>',
+          size: 'large',
+          buttons: {
+            cancel: {
+              label: "I'm a cancel button!",
+              className: 'btn-danger',
+              callback: function () { log('Custom cancel clicked'); }
+            },
+            noclose: {
+              label: "I don't close the modal!",
+              className: 'btn-warning',
+              callback: function () {
+                log('Custom button clicked');
+                return false;
+              }
+            },
+            ok: {
+              label: "I'm an OK button!",
+              className: 'btn-info',
+              callback: function () { log('Custom OK clicked'); }
+            }
+          }
+        });
+      });
+
+      document.getElementById('run-custom-loading').addEventListener('click', function () {
+        var dialog = bootbox.dialog({
+          message: '<p class="text-center mb-0">Please wait while we do something...</p>',
+          closeButton: false
+        });
+        log('Loading dialog opened');
+        setTimeout(function () {
+          dialog.modal('hide');
+          log('Loading dialog closed');
+        }, 2000);
+      });
+    }());
+  </script>
+</body>
+</html>

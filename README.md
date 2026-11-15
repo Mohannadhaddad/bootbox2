@@ -47,6 +47,8 @@ Much more dependency information can be found [on the Bootbox website](http://bo
 - **Dialog queue (default on):** opening a new dialog parks the current one; dismissing restores the previous (LIFO). Use `bootbox.hideAll()` / `bootbox.dismissAll()` to clear the stack, or `queue: false` for legacy concurrent stacking.
 - Accessibility: `aria-modal`, `aria-labelledby` / `aria-describedby`, and a properly labeled close button.
 
+Full write-up: [docs/DIALOG-QUEUE.md](docs/DIALOG-QUEUE.md).
+
 For a full list of releases and changes please see [the changelog](https://github.com/bootboxjs/bootbox/blob/master/CHANGELOG.md).
 
 ## License

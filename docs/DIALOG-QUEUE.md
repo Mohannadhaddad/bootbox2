@@ -1,6 +1,6 @@
-# Bootbox 6.1.0 — LIFO Dialog Queue & Native Polish
+# Bootbox LIFO Dialog Queue & Native Polish
 
-This document describes the dialog-queue work shipped in **Bootbox 6.1.0**: why it exists, how it behaves, the public API, accessibility changes, migration notes, and how it was verified.
+This document describes the dialog-queue work shipped in **Bootbox 6.1.0** and refined in **6.1.1**: why it exists, how it behaves, the public API, accessibility changes, migration notes, and how it was verified.
 
 ## Motivation
 
@@ -11,7 +11,7 @@ Compared with [SweetAlert2](https://sweetalert2.github.io/), Bootbox also lacked
 1. Do **not** void older dialogs when a new one opens.
 2. **Park** the current dialog and show the latest.
 3. When the latest is dismissed, **restore** the previous one (and so on).
-4. Provide a **dismiss all** path that clears everything with no restore.
+4. Provide a **dismiss all** path that clears everything with no restore — including an **in-dialog red button** with the queue count.
 
 Phase 1 kept Bootstrap + jQuery (Bootbox’s identity), added the queue, and improved a11y. It intentionally did **not** add SweetAlert2-style icons, toasts, timers, or a theme engine.
 
@@ -19,24 +19,34 @@ Phase 1 kept Bootstrap + jQuery (Bootbox’s identity), added the queue, and imp
 
 ```
 open dialog A  →  A visible
-open dialog B  →  A parked (hidden, kept in DOM) · B visible
-dismiss B      →  B destroyed (unless reusable) · A restored
-open dialog C  →  A parked · C visible
-dismissAll()   →  C and A cleared · nothing restored
+open dialog B  →  wait until A is hidden · A parked · B visible with [Dismiss all (2)]
+dismiss B      →  B destroyed (unless reusable) · A restored (no dismiss-all button)
+open dialog C  →  wait until B/A parked as needed · top shows [Dismiss all (N)]
+click Dismiss all (N) / dismissAll()  →  all cleared · nothing restored
 ```
 
-The stack is **LIFO** (last in, first out): the most recently opened queued dialog is on top; older dialogs wait underneath in order.
+The stack is **LIFO** (last in, first out): the most recently opened queued dialog is on top; older dialogs wait underneath in order. A new dialog is shown only after the previous one has fully hidden, so only one Bootbox dialog is visible at a time.
 
 | Situation | Result |
 |-----------|--------|
-| First queued dialog opens | Becomes the active dialog |
-| Another queued dialog opens while one is active | Active dialog is **parked** (hidden, not destroyed); new dialog becomes active |
-| Top dialog dismissed normally | Destroyed if `reusable` is false; previous parked dialog is **shown** again |
+| First queued dialog opens | Becomes the active dialog (no dismiss-all button) |
+| Another queued dialog opens while one is active | Active dialog is **parked** (hidden, not destroyed); new dialog becomes active after park completes |
+| Queue depth `N > 1` | Active dialog footer shows a red **Dismiss all (N)** button |
+| Top dialog dismissed normally | Destroyed if `reusable` is false; previous parked dialog is **shown** again; button count updates or is removed |
 | Callback returns `false` | Top dialog stays open; stack unchanged |
-| `hideAll()` / `dismissAll()` | Active + all parked dialogs cleared; **no** restore |
-| `queue: false` | Legacy concurrent stacking (no park/restore) |
+| In-dialog **Dismiss all (N)** / `hideAll()` / `dismissAll()` | Active + all parked dialogs cleared; **no** restore |
+| `queue: false` | Legacy concurrent stacking (no park/restore, no dismiss-all button) |
 
 Parked dialogs keep their DOM, event handlers, and form state (for example, typed prompt values survive park → restore).
+
+### In-dialog Dismiss all (N)
+
+When more than one dialog is in the queue (`N = active + parked`):
+
+- A footer button with Bootstrap `btn-danger` (red) is injected on the **active** dialog.
+- Label: `Dismiss all (N)` (locale key `DISMISS_ALL`, English default `"Dismiss all"`).
+- Clicking it calls `bootbox.dismissAll()`.
+- When only one dialog remains, the button is removed.
 
 ## Public API
 
@@ -58,11 +68,11 @@ bootbox.setDefaults({ queue: false });
 
 ### `bootbox.hideAll()` / `bootbox.dismissAll()`
 
-Aliases of the same function. Dismisses the active dialog and every parked dialog, clears the queue, and does **not** restore anything.
+Aliases of the same function. Dismisses the active dialog and every parked dialog, clears the queue, and does **not** restore anything. The same action is available as the in-dialog red **Dismiss all (N)** button when `N > 1`.
 
 ```js
 bootbox.alert('First');
-bootbox.alert('Second'); // parks First
+bootbox.alert('Second'); // parks First; Second shows "Dismiss all (2)"
 bootbox.dismissAll();    // both gone
 ```
 
@@ -162,7 +172,8 @@ Version bump is **minor** (`6.1.0`) with a changelog callout: default multi-open
 Primary source: [`bootbox.js`](../bootbox.js).
 
 - Module-private state: `activeDialog`, `dialogStack`, per-dialog `bb-meta` (`parking`, `dismissAll`, `tracked`).
-- `queueAwareShow` parks the current tracked dialog (if any), then shows the new one immediately so callers keep synchronous `modal('show')` semantics.
+- `queueAwareShow` parks the current tracked dialog (if any) and shows the new one only after `hidden.bs.modal`.
+- `updateDismissAllButton` injects/removes the red `Dismiss all (N)` footer control from queue depth.
 - Park hides set `meta.parking` so `hide` / `hidden` handlers skip unbind/destroy; final dismiss runs normal teardown then `restoreNext()`.
 - `prompt` still builds with `show: false` then calls `queueAwareShow` when it should appear, so prompts participate in the queue.
 

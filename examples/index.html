@@ -303,10 +303,11 @@
   <div class="container layout">
     <main>
       <section id="queue" class="example-section">
-        <h2>Dialog queue <span class="badge-new">New in 6.1.0</span></h2>
+        <h2>Dialog queue <span class="badge-new">New in 6.1.1</span></h2>
         <p class="section-intro">
           By default only one Bootbox dialog is visible at a time. Opening another parks
-          the current dialog; dismissing restores the previous one (LIFO).
+          the current dialog (after it hides); dismissing restores the previous one (LIFO).
+          When more than one is queued, the active dialog shows a red <strong>Dismiss all (N)</strong> button.
         </p>
 
         <article class="example example-new" id="example-queue-lifo">
@@ -316,7 +317,8 @@
           </div>
           <p>
             Opens a first alert, then a second. The first is parked (hidden, state kept)
-            until you dismiss the second — then it comes back.
+            until you dismiss the second — then it comes back. The second dialog shows
+            a red <strong>Dismiss all (2)</strong> in its footer.
           </p>
           <div class="example-actions">
             <button type="button" class="btn btn-run btn-sm" id="run-queue-lifo">Run example</button>
@@ -328,28 +330,29 @@
 
 bootbox.alert({
   title: 'Second dialog',
-  message: 'Dismiss me to restore the first dialog.'
+  message: 'Use OK to restore the first, or red Dismiss all (2) to clear both.'
 });</code></pre>
         </article>
 
         <article class="example example-new" id="example-queue-dismiss-all">
           <div class="example-head">
-            <h3>Dismiss all parked dialogs</h3>
+            <h3>Dismiss all (N) in the dialog</h3>
             <span class="badge-new">New</span>
           </div>
           <p>
-            <code>bootbox.dismissAll()</code> (alias of <code>hideAll()</code>) clears the
-            active dialog and every parked dialog with no restore.
+            Open a 3-deep stack. The top dialog shows a red <strong>Dismiss all (3)</strong>
+            button. Click it inside the modal (or call <code>bootbox.dismissAll()</code>) to
+            clear every queued dialog with no restore.
           </p>
           <div class="example-actions">
             <button type="button" class="btn btn-run btn-sm" id="run-queue-stack">Open a stack</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="run-dismiss-all">Dismiss all</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="run-dismiss-all">API: dismissAll()</button>
           </div>
 <pre><code>bootbox.alert({ title: 'Layer 1', message: 'Parked first' });
 bootbox.alert({ title: 'Layer 2', message: 'Parked second' });
-bootbox.alert({ title: 'Layer 3', message: 'Active on top' });
+bootbox.alert({ title: 'Layer 3', message: 'Active — footer has Dismiss all (3)' });
 
-// Later:
+// Same action as the red in-dialog button:
 bootbox.dismissAll();</code></pre>
         </article>
 
@@ -616,17 +619,17 @@ setTimeout(function () {
         logLines.innerHTML = '';
       });
 
-      // --- New in 6.1.0: dialog queue ---
+      // --- New in 6.1.1: dialog queue + in-dialog Dismiss all (N) ---
       document.getElementById('run-queue-lifo').addEventListener('click', function () {
         bootbox.alert({
           title: 'First dialog',
           message: 'I will be parked when the next dialog opens. Dismiss the second dialog to restore me.'
         });
-        // Open the second dialog on the next tick so the first can finish showing.
+        // Open the second dialog after the first has started showing; queue waits for park to finish.
         setTimeout(function () {
           bootbox.alert({
             title: 'Second dialog',
-            message: 'Dismiss me to restore the first dialog.',
+            message: 'Use OK to restore the first, or the red Dismiss all (2) button to clear both.',
             callback: function () {
               log('Second dialog dismissed — first should restore');
             }
@@ -639,10 +642,13 @@ setTimeout(function () {
         setTimeout(function () {
           bootbox.alert({ title: 'Layer 2', message: 'Parked second' });
           setTimeout(function () {
-            bootbox.alert({ title: 'Layer 3', message: 'Active on top — try Dismiss all' });
-            log('Opened a 3-deep queue stack');
-          }, 250);
-        }, 250);
+            bootbox.alert({
+              title: 'Layer 3',
+              message: 'Active on top — use the red Dismiss all (3) button in this dialog.'
+            });
+            log('Opened a 3-deep queue stack — look for Dismiss all (3)');
+          }, 300);
+        }, 300);
       });
 
       document.getElementById('run-dismiss-all').addEventListener('click', function () {

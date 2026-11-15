@@ -46,9 +46,11 @@ Bootbox **3.3.0** is the *last* release to support Bootstrap 2.2.x.
 
 Much more dependency information can be found [on the Bootbox website](http://bootboxjs.com/getting-started.html#bootbox-dependencies).
 
-## 6.1.0 (Latest Release)
+## 6.1.1 (Latest Release)
 
-- **Dialog queue (default on):** opening a new dialog parks the current one; dismissing restores the previous (LIFO). Use `bootbox.hideAll()` / `bootbox.dismissAll()` to clear the stack, or `queue: false` for legacy concurrent stacking.
+- **Dialog queue:** only one dialog visible; next waits for the previous to hide; LIFO restore on dismiss.
+- **In-dialog red Dismiss all (N)** when more than one message is queued (`N` = active + parked).
+- API: `bootbox.dismissAll()` / `hideAll()`, or `queue: false` for legacy stacking.
 - Accessibility: `aria-modal`, `aria-labelledby` / `aria-describedby`, and a properly labeled close button.
 
 Full write-up: [docs/DIALOG-QUEUE.md](docs/DIALOG-QUEUE.md).

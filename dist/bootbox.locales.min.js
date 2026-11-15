@@ -1,6 +1,6 @@
 /**
  * Bootbox.js — alert, confirm, prompt, and flexible dialogs for the Bootstrap framework 
- * @version: 6.1.0
+ * @version: 6.1.1
  * @project: https://github.com/bootboxjs/bootbox
  * @license: MIT http://bootboxjs.com/license.txt
  */
